@@ -1,9 +1,14 @@
 package com.fitness.aiservice.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitness.aiservice.model.Activity;
+import com.fitness.aiservice.model.Recommendation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -15,7 +20,61 @@ public class ActivityAiService {
         String prompt = createPromptForActivity(activity);
         String aiResponse = geminiService.getAnswer(prompt);
         log.info("Gemini Response!: " + aiResponse);
+        processAiResponse(activity, aiResponse);
         return aiResponse;
+    }
+
+    private void processAiResponse( Activity activity,String aiResponse) {
+        try {
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(aiResponse);
+
+            JsonNode textNode = rootNode.path("candidates")
+                    .get(0)
+                    .path("content")
+                    .path("parts")
+                    .get(0)
+                    .path("text");
+
+            String jsonContent=textNode.asText()
+                    .replaceAll("```json\\n","")
+                    .replaceAll("\\```","")
+                    .trim();
+           // log.info("Parsed Response from ai: " + jsonContent);
+
+            JsonNode analysisJson = mapper.readTree(jsonContent);
+            JsonNode analysisNode =analysisJson.path("analysis");
+
+            StringBuilder fullAnalysis = new StringBuilder();
+            addAnalysisSection(fullAnalysis,analysisNode,"overall","Overall:");
+            addAnalysisSection(fullAnalysis,analysisNode,"pace","Pace:");
+            addAnalysisSection(fullAnalysis,analysisNode,"heartRate","HeartRate:");
+            addAnalysisSection(fullAnalysis,analysisNode,"caloriesBurned","CaloriesBurned:");
+
+            List<String> improvements = extractImprovements(analysisJson);
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+
+    }
+
+    private List<String> extractImprovements(JsonNode analysisJson) {
+    }
+
+    private void addAnalysisSection(StringBuilder fullAnalysis, JsonNode analysisNode, String key, String prefix) {
+
+
+        if(!analysisNode.path(key).isMissingNode()){
+            fullAnalysis.append(prefix)
+                    .append(analysisNode.path(key).asText())
+                    .append("\n\n");
+
+        }
     }
 
     private String createPromptForActivity(Activity activity) {

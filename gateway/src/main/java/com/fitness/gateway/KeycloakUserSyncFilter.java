@@ -26,14 +26,20 @@ public class KeycloakUserSyncFilter implements WebFilter {
 
         String userId=exchange.getRequest().getHeaders().getFirst("X-User-ID");
         String token=exchange.getRequest().getHeaders().getFirst("Authorization");
+        RegisterRequest registerRequest = getUserDetails(token);
 
+        if(userId==null) {
+            userId=registerRequest.getKeycloakId();
+
+        }
         if(userId != null && token !=null) {
+            String finalUserId=userId;
             return userService.validateUser(userId)
                     .flatMap(exist -> {
 
                         if (!exist) {
                             //Registering user
-                            RegisterRequest registerRequest = getUserDetails(token);
+                          //  RegisterRequest registerRequest = getUserDetails(token);
                             if (registerRequest != null) {
                                 return userService.registerUser(registerRequest)
                                         .then(Mono.empty());
@@ -50,7 +56,7 @@ public class KeycloakUserSyncFilter implements WebFilter {
                     })
                     .then(Mono.defer(() -> {
                         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                                .header("X-User-ID", userId)
+                                .header("X-User-ID", finalUserId)
                                 .build();
                         return chain.filter(exchange.mutate().request(mutatedRequest).build());
                     }));
@@ -70,7 +76,7 @@ public class KeycloakUserSyncFilter implements WebFilter {
             RegisterRequest registerRequest=new RegisterRequest();
             registerRequest.setEmail(claims.getStringClaim("email"));
             registerRequest.setKeycloakId(claims.getStringClaim("sub"));
-            registerRequest.setPassword(claims.getStringClaim("dummy@123123"));
+            registerRequest.setPassword("dummy@123123");
             registerRequest.setFirstName(claims.getStringClaim("given_name"));
             registerRequest.setLastName(claims.getStringClaim("family_name"));
             return registerRequest;

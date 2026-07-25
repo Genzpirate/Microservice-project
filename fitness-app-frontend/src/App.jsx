@@ -33,6 +33,11 @@ function App() {
     }
   },[token,tokenData,dispatch]);
 
+  const handleLogout = () => {
+    dispatch(clearAuth())
+    logOut()
+  }
+
 
   return (
     <Router>
@@ -49,6 +54,7 @@ function App() {
                   // </div>
 
                   <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+                    <Button variant="contained" color="secondary" onClick={() => {logOut();}}>Logout</Button>
                     <Routes>
                       <Route path="/activities" element={<ActivitiesPage />}/>
                       <Route path="/activities/:id" element={<ActivityDetail />}/>

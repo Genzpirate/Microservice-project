@@ -35,6 +35,8 @@ const ActivityForm = ({ onActivitiesAdded }) => {
             <MenuItem value="RUNNING">RUNNING</MenuItem>
              <MenuItem value="WALKING">WALKING</MenuItem>
               <MenuItem value="CYCLING">CYCLING</MenuItem>
+               <MenuItem value="SWIMMING">SWIMMING</MenuItem>
+                <MenuItem value="OTHER">OTHER</MenuItem>
             
           </Select>
      </FormControl>

@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 public class Recommendation {
     @Id
-    private int id;
+    private String id; //changed from int
     private String activityId;
     private String userId;
     private ActivityType activityType;
